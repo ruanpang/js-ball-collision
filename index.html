@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>透明小球碰撞JS代码</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        
+        #screen {
+            width: 800px;
+            height: 640px;
+            position: relative;
+            background: #ccccff;
+            margin: 0 auto;
+            vertical-align: bottom;
+        }
+        
+        #inner {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #screen p {
+            color: white;
+            font: bold 14px;
+        }
+        
+        #inner div {
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="screen">
+        <p>
+            <span>得分：</span><span id="score">0</span>
+        </p>
+        <div id="inner">
+        </div>
+    </div>
+    <!-- <input type="button" id="start" value="start"><input type="button" id="stop" value="stop"><br><br><br> -->
+    <script>
+        /**
+         * 生成并返回一个从m到n全区间的随机数
+         * @param {Object} m
+         * @param {Object} n
+         */
+        function randomNum(m, n) {
+            return Math.floor(Math.random() * (n - m + 1) + m);
+        }
+
+        /**
+         * 生成一个随机颜色，并返回rgb字符串值
+         */
+        function randomColor() {
+            var r = randomNum(0, 255);
+            var g = randomNum(0, 255);
+            var b = randomNum(0, 255);
+            return "rgb(" + r + "," + g + "," + b + ")";
+        }
+        var getFlag = function(a) {
+            return document.getElementById(a)
+        };
+        var extend = function(a, b) {
+            for (p in b) {
+                a[p] = b[p]
+            }
+            return a
+        };
+        var error_content = ['职责驱动', '垂直', '官本位', '部门墙', '领导', '人', '仲裁', '动手', '谈阻碍', '组织惯性', '生产思维', '部门管理', '法人架构'];
+        var correct_content = ['目标驱动', '矩阵', '专家通道', '资源池', '人员经理', '岗', '协同', '动脑', '讲策略', '主动变革', '经营思维', '项目管理', '管理架构'];
+        var click_content = []
+        var all_content = error_content.concat(correct_content)
+        var Ball = function(diameter, classn) {
+            var ball = document.createElement("div");
+            ball.className = classn;
+            ball.innerHTML = classn;
+            with(ball.style) {
+                width = height = diameter + "px";
+                position = "absolute"
+                backgroundColor = randomColor();
+            }
+            ball.addEventListener('click', function() {
+                var click_value = this.innerText
+                let score = document.getElementById("score").innerText;
+                console.log('click', click_content, click_value)
+                if (!click_content.includes(click_value)) {
+                    click_content.push(click_value)
+                    if (error_content.includes(click_value)) {
+                        score--
+                    }
+                    if (correct_content.includes(click_value)) {
+                        score++
+                    }
+                    document.getElementById("score").innerText = score
+                }
+            })
+            return ball
+        };
+        var Screen = function(a, b) {
+            var c = this;
+            if (!(c instanceof Screen)) {
+                return new Screen(a, b)
+            }
+            b = extend(Screen.Config, b);
+            c.container = getFlag(a);
+            c.ballsnum = b.ballsnum;
+            c.diameter = 80;
+            c.radius = c.diameter / 2;
+            c.spring = b.spring;
+            c.bounce = b.bounce;
+            c.gravity = b.gravity;
+            c.balls = [];
+            c.timer = null;
+            c.L_bound = 0;
+            c.R_bound = c.container.clientWidth;
+            c.T_bound = 0;
+            c.B_bound = c.container.clientHeight
+        };
+        Screen.Config = {
+            ballsnum: all_content.length,
+            spring: 0.8,
+            bounce: -0.9,
+            gravity: 0.05
+        };
+        Screen.prototype = {
+            initialize: function() {
+                var a = this;
+                a.createBalls();
+                a.timer = setInterval(function() {
+                    a.hitBalls()
+                }, 30)
+            },
+            createBalls: function() {
+                var d = this,
+                    c = d.ballsnum;
+                var b = document.createDocumentFragment();
+                for (i = 0; i < c; i++) {
+                    var a = new Ball(d.diameter, all_content[i]);
+                    a.diameter = d.diameter;
+                    a.radius = d.radius;
+                    a.style.left = (Math.random() * d.R_bound) + "px";
+                    a.style.top = (Math.random() * d.B_bound) + "px";
+                    a.vx = Math.random() * 6 - 3;
+                    a.vy = Math.random() * 6 - 3;
+                    b.appendChild(a);
+                    d.balls[i] = a
+                }
+                d.container.appendChild(b)
+            },
+            hitBalls: function() {
+                var h = this,
+                    g = h.ballsnum,
+                    d = h.balls;
+                for (i = 0; i < g - 1; i++) {
+                    var b = h.balls[i];
+                    b.x = b.offsetLeft + b.radius;
+                    b.y = b.offsetTop + b.radius;
+                    for (j = i + 1; j < g; j++) {
+                        var c = h.balls[j];
+                        c.x = c.offsetLeft + c.radius;
+                        c.y = c.offsetTop + c.radius;
+                        dx = c.x - b.x;
+                        dy = c.y - b.y;
+                        var e = Math.sqrt(dx * dx + dy * dy);
+                        var f = b.radius + c.radius;
+                        if (e < f) {
+                            var a = Math.atan2(dy, dx);
+                            tx = b.x + Math.cos(a) * f;
+                            ty = b.y + Math.sin(a) * f;
+                            ax = (tx - c.x) * h.spring;
+                            ay = (ty - c.y) * h.spring;
+                            b.vx -= ax;
+                            b.vy -= ay;
+                            c.vx += ax;
+                            c.vy += ay
+                        }
+                    }
+                }
+                for (i = 0; i < g; i++) {
+                    h.moveBalls(d[i])
+                }
+            },
+            moveBalls: function(b) {
+                var f = this;
+                b.vy += f.gravity;
+                b.style.left = (b.offsetLeft + b.vx) + "px";
+                b.style.top = (b.offsetTop + b.vy) + "px";
+                var d = f.L_bound,
+                    e = f.R_bound,
+                    g = f.T_bound,
+                    a = f.B_bound,
+                    c = f.bounce;
+                if (b.offsetLeft < d) {
+                    b.style.left = d;
+                    b.vx *= c
+                } else {
+                    if (b.offsetLeft + b.diameter > e) {
+                        b.style.left = (e - b.diameter) + "px";
+                        b.vx *= c
+                    } else {
+                        if (b.offsetTop < g) {
+                            b.style.top = g;
+                            b.vy *= c
+                        }
+                    }
+                }
+                if (b.offsetTop + b.diameter > a) {
+                    b.style.top = (a - b.diameter) + "px";
+                    b.vy *= c
+                }
+            }
+        };
+        window.onload = function() {
+            var a = null;
+            document.getElementById("inner").innerHTML = "";
+            a = new Screen("inner", {
+                ballsnum: all_content.length,
+                spring: 0.3,
+                bounce: -0.5,
+                gravity: 0.005
+            });
+            a.initialize();
+
+        };
+    </script>
+    <!-- <script src="./test.js"></script> -->
+</body>
+
+</html>
