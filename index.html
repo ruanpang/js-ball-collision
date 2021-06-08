@@ -18,7 +18,7 @@
         
         #screen {
             width: 100%;
-            height: 90vh;
+            height: 80vh;
             padding-bottom: 10vh;
             position: relative;
             background: #ccccff;
@@ -34,8 +34,7 @@
             height: 100%;
         }
         
-        #screen p {
-            color: white;
+        p {
             font-weight: bolder;
             margin: 0;
             font-size: 80px;
@@ -53,10 +52,11 @@
 </head>
 
 <body>
+    <p style="display: flex;justify-content: space-between;padding: 0 20px;">
+        <span>倒计时：<span id="time">30</span>s</span>
+        <span>得分：<span id="score">0</span></span>
+    </p>
     <div id="screen">
-        <p>
-            <span>得分：</span><span id="score">0</span>
-        </p>
         <div id="inner">
         </div>
     </div>
@@ -92,30 +92,47 @@
         var error_content = ['职责驱动', '垂直', '官本位', '部门墙', '领导', '人', '仲裁', '动手', '谈阻碍', '组织惯性', '生产思维', '部门管理', '法人架构'];
         var correct_content = ['目标驱动', '矩阵', '专家通道', '资源池', '人员经理', '岗', '协同', '动脑', '讲策略', '主动变革', '经营思维', '项目管理', '管理架构'];
         var click_content = []
-        var all_content = error_content.concat(correct_content)
+        var all_content = []
+        for (var i in error_content) {
+            all_content.push({
+                name: error_content[i],
+                score: ['职责驱动', '生产思维', '法人架构'].includes(error_content[i]) ? -10 : -7
+            })
+        }
+        for (var i in correct_content) {
+            all_content.push({
+                name: correct_content[i],
+                score: ['目标驱动', '经营思维', '管理架构'].includes(correct_content[i]) ? 10 : 7
+            })
+        }
+        // var all_content = error_content.concat(correct_content)
+
         var Ball = function(diameter, classn) {
             var ball = document.createElement("div");
-            ball.className = classn;
-            ball.innerHTML = classn;
+            ball.className = classn.name;
+            ball.innerHTML = classn.name;
             with(ball.style) {
                 width = height = diameter + "px";
                 position = "absolute"
                 backgroundColor = randomColor();
             }
+            var _score = classn.score
             ball.addEventListener('click', function() {
                 var click_value = this.innerText
                 let score = document.getElementById("score").innerText;
-                console.log('click', click_content, click_value)
-                if (!click_content.includes(click_value)) {
-                    click_content.push(click_value)
-                    if (error_content.includes(click_value)) {
-                        score--
-                    }
-                    if (correct_content.includes(click_value)) {
-                        score++
-                    }
-                    document.getElementById("score").innerText = score
-                }
+                // if (!click_content.includes(click_value)) {
+                click_content.push(click_value)
+                    // if (error_content.includes(click_value)) {
+                    //     score--
+                    // }
+                    // if (correct_content.includes(click_value)) {
+                    //     score++
+                    // }
+                score = parseInt(score) + parseInt(_score)
+                score = parseInt(score)
+                document.getElementById("score").innerText = score
+                    // }
+                this.remove()
             })
             return ball
         };
@@ -238,12 +255,25 @@
             document.getElementById("inner").innerHTML = "";
             a = new Screen("inner", {
                 ballsnum: all_content.length,
-                spring: 0.3,
-                bounce: -0.5,
+                spring: 0.001,
+                bounce: -0.3,
                 gravity: 0.005
             });
             a.initialize();
+            var _timer = setInterval(function() {
+                var time = document.getElementById("time").innerText
+                if (time == 0) {
+                    var score = document.getElementById("score").innerText;
+                    alert("已结束，当前得分:" + score)
+                    clearInterval(_timer)
+                }
+                if (time > 0) {
+                    time--
+                    document.getElementById("time").innerText = time
+                }
 
+
+            }, 1000)
         };
     </script>
     <!-- <script src="./test.js"></script> -->
